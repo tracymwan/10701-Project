@@ -4,7 +4,10 @@ import logging, os.path, sys, time, random, argparse
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Input, LSTM, Embedding, Lambda
+from keras.layers import Dense, Input, LSTM, Embedding, Lambda, Dropout, BatchNormalization
+from keras.callbacks import EarlyStopping
+from keras import backend as K
+from keras.models import Model
 
 logger = logging.getLogger("10701")
 logger.setLevel(logging.DEBUG)
@@ -37,23 +40,25 @@ def preprocess():
 	question2_word_sequences = tokenizer.texts_to_sequences(question2)
 	question2_data = pad_sequences(question2_word_sequences, maxlen=max_sentence_length)
 	word_index = tokenizer.word_index
-	logger.info(f"Found %s unique tokens." % len(word_index))
+	#logger.info(f"Number of unique tokens:", len(word_index))
 
 	target = np.array(data['is_duplicate'], dtype=int)
 
-	logger.info(f"Shape of data tensor:", question1_data.shape)
-	logger.info(f"Shape of label tensor:", target)
+	#logger.info(f"Shape of data tensor:", question1_data.shape)
+	#logger.info(f"Shape of label tensor:", target.shape)
 
 	# preparing the embedding layer
 	embeddings_index = {}
 	f = open(glove_dir)
 	for line in f:
 		values = line.split()
+		if (len(values) != 301):
+			continue
 		word = values[0]
 		coefs = np.asarray(values[1:], dtype='float32')
 		embeddings_index[word] = coefs
 	f.close()
-	logger.info(f"Found %s word vectors." % len(embeddings_index))
+	#logger.info(f"Number of word vectors:", len(embeddings_index))
 
 	EMBEDDING_DIM = 300
 	embedding_matrix = np.zeros((len(word_index) + 1, EMBEDDING_DIM))
@@ -62,8 +67,8 @@ def preprocess():
 		if embeddings_vector is not None: 
 			embedding_matrix[i] = embeddings_vector
 
-	np.save(open('q1_train.npy', 'wb'), q1_train)
-	np.save(open('q2_train.npy', 'wb'), q2_train)
+	np.save(open('q1_train.npy', 'wb'), question1_data)
+	np.save(open('q2_train.npy', 'wb'), question2_data)
 	np.save(open('target.npy', 'wb'), target)
 	np.save(open('embedding_matrix.npy', 'wb'), embedding_matrix)
 
@@ -96,9 +101,9 @@ def train():
 	question_2_embedded = embedding_layer(question_2_input)
 	question_2_vec = lstm_layer(question_2_embedded)
 
-	distance = Lambda(lambda x, y: K.sum(K.square(x - y), axis=1, keepdims=True))([question_1_vec, question_2_vec])
+	distance = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), axis=1, keepdims=True))([question_1_vec, question_2_vec])
 	dense_1 = Dense(16, activation='sigmoid')(distance)
-	dense_1 = Dropout(0.3)(dense1)
+	dense_1 = Dropout(0.3)(dense_1)
 	batch_normal_1 = BatchNormalization()(dense_1)
 	prediction = Dense(1, activation='sigmoid')(batch_normal_1)
 
@@ -106,7 +111,7 @@ def train():
 	model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
 
 	early_stopping =EarlyStopping(monitor='val_loss', patience=3)
-	model.fit([Q1_train, Q2_train], y_train, validation_data=([Q1_val, Q2_val], y_val), verbose=1, 
+	model.fit([question1_train, question2_train], y_train, validation_data=([question1_val, question2_val], y_val), verbose=1, 
           nb_epoch=10, batch_size=256, shuffle=True,class_weight=None, callbacks=[early_stopping])
 
 	pred = model.predict([question1_test, question2_test], verbose=1)
@@ -149,6 +154,7 @@ def main(args):
 
 	if args.preprocess:
 		preprocess()
+	train()
 
 	logger.info(f"Log saved to {log_file_name}")
 
