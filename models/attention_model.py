@@ -66,11 +66,14 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         sent_representation2)
 
     if distance_type == "manhattan":
-        distance = Lambda(lambda x: K.exp(-K.sum(K.abs(x[0]-x[1]), axis=1, keepdims=True)))([question_1_vec, question_2_vec])
+        distance = Lambda(lambda x: K.exp(-K.sum(K.abs(x[0]-x[1]), axis=1, keepdims=True)))(
+            [sent_representation1, sent_representation2])
     elif distance_type == "euclidean":
-        distance = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), axis=1, keepdims=True))([question_1_vec, question_2_vec])
+        distance = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), axis=1, keepdims=True))(
+            [sent_representation1, sent_representation2])
     elif distance_type == "cosine": 
-        distance = Lambda(lambda x: -K.mean((K.l2_normalize(x[0], axis=-1) * K.l2_normalize(x[1], axis=-1)), axis=-1, keepdims=True))([question_1_vec, question_2_vec])
+        distance = Lambda(lambda x: -K.mean((K.l2_normalize(x[0], axis=-1) * K.l2_normalize(x[1], axis=-1)), axis=-1, keepdims=True))(
+            [sent_representation1, sent_representation2])
     dense_1 = Dense(16, activation='sigmoid')(distance)
     dense_1 = Dropout(0.3)(dense_1)
     batch_normal_1 = BatchNormalization()(dense_1)
