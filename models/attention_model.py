@@ -84,6 +84,7 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         input=[question_1_input, question_2_input], output=prediction)
     model.compile(
         loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
+    model.summary(print_fn=lambda x: logger.info(x))
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
     model.fit(
@@ -98,3 +99,4 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         callbacks=[early_stopping])
 
     pred = model.predict([question1_test, question2_test], verbose=1)
+    logger.log(f"Final test accuracy:", sum(y_test == pred)/len(y_test))
