@@ -99,5 +99,5 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         callbacks=[early_stopping])
 
     pred = model.predict([question1_test, question2_test], verbose=1)
-    logger.log(f"Correct predction count:", sum(y_test == pred))
-    logger.log(f"Test length:", len(y_test))
+    logger.info(f"Correct predction count:", sum(y_test == pred))
+    logger.info(f"Test length:", len(y_test))
