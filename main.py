@@ -17,6 +17,7 @@ def parse_arguments():
 	parser.add_argument('--preprocess', dest='preprocess', action="store_true")
 	parser.add_argument('--model_type', dest='model_type', type=str, help="siamese or attention")
 	parser.add_argument('--distance_type', dest='distance_type', type=str, help="manhattan or euclidean")
+	parser.add_argument('--random_seed', dest='random_seed', type=int)
 	return parser.parse_args()
 
 def run_model(model_type, distance_type):
@@ -66,7 +67,10 @@ def main(args):
 	logger.info(f"Log saving to {log_file_name}")
 
 	time_seed = int(''.join(time_str.split('_'))) % (2 ** 32)
-	np.random.seed(time_seed)
+	if (args.random_seed):
+		np.random.seed(args.random_seed)
+	else:
+		np.random.seed(time_seed)
 	logger.info(f"Numpy random seed {time_seed}")
 
 	if args.preprocess:
