@@ -15,7 +15,7 @@ logs_dir = "logs"
 def parse_arguments(): 
 	parser = argparse.ArgumentParser(description='Identifying Duplicate Question Parser')
 	parser.add_argument('--preprocess', dest='preprocess', action="store_true")
-	parser.add_argument('--model_type', dest='model_type', type=str, help="siamese or attention")
+	parser.add_argument('--model_type', dest='model_type', type=str, help="siamese or attention or bidirectional")
 	parser.add_argument('--distance_type', dest='distance_type', type=str, help="manhattan or euclidean")
 	parser.add_argument('--random_seed', dest='random_seed', type=int)
 	return parser.parse_args()
@@ -31,7 +31,9 @@ def run_model(model_type, distance_type):
 	X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = 0.15, stratify=y)
 
 	if model_type == "siamese":
-		siamese_model.train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type)
+		siamese_model.train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type, False)
+	elif model_type == "bidirectional":
+		siamese_model.train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type, True)
 	elif model_type == "attention":
 		attention_model.train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type)
 

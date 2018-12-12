@@ -1,11 +1,12 @@
-from keras.layers import Dense, Input, LSTM, Embedding, Lambda, Dropout, BatchNormalization
+from keras.layers import Dense, Input, LSTM, Embedding, Lambda, Dropout, BatchNormalization, Bidirectional
 from keras.callbacks import EarlyStopping
+from keras.callbacks import CSVLogger
 from keras import backend as K
 from keras.models import Model
 
 max_sentence_length = 25
 
-def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type):
+def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matrix, distance_type, bidirectional):
 	question1_train = X_train[:,0]
 	question2_train = X_train[:,1]
 	question1_val = X_val[:,0]
@@ -13,9 +14,14 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
 	question1_test = X_test[:,0]
 	question2_test = X_test[:,1]
 
+	csv_logger = CSVLogger('logs/log.csv', append=True, separator=';')
+
 	embedding_layer = Embedding(len(embedding_matrix), 300, weights=[embedding_matrix], 
 		input_length=max_sentence_length, trainable=False)
-	lstm_layer = LSTM(128)
+	if bidirectional:
+		lstm_layer = Bidirectional(128)
+	else: 
+		lstm_layer = LSTM(128)
 
 	question_1_input = Input(shape=(max_sentence_length, ), dtype='int32')
 	question_1_embedded = embedding_layer(question_1_input)
@@ -42,7 +48,7 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
 
 	early_stopping =EarlyStopping(monitor='val_loss', patience=3)
 	model.fit([question1_train, question2_train], y_train, validation_data=([question1_val, question2_val], y_val), verbose=1, 
-          nb_epoch=10, batch_size=256, shuffle=True,class_weight=None, callbacks=[early_stopping])
+          nb_epoch=10, batch_size=256, shuffle=True,class_weight=None, callbacks=[early_stopping, csv_logger])
 
 	pred = model.predict([question1_test, question2_test], verbose=1)
 	logger.info(f"Correct predction count:", sum(y_test == pred))

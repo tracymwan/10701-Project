@@ -96,8 +96,9 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         batch_size=256,
         shuffle=True,
         class_weight=None,
-        callbacks=[early_stopping])
+        callbacks=[early_stopping, logger])
 
     pred = model.predict([question1_test, question2_test], verbose=1)
-    logger.info(f"Correct predction count:", sum(y_test == pred))
-    logger.info(f"Test length:", len(y_test))
+    np.save(open('pred.npy', 'wb'), pred)
+    logger.info(f"Correct predction count: {sum(y_test == pred)}")
+    logger.info(f"Test length: {len(y_test)}")
