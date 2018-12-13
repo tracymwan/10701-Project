@@ -3,6 +3,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import CSVLogger
 from keras import backend as K
 from keras.models import Model
+import numpy as np
 
 max_sentence_length = 25
 
