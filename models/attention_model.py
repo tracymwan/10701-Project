@@ -18,6 +18,8 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
     question2_test = X_test[:, 1]
 
     csv_logger = CSVLogger('logs/log.csv', append=True, separator=';')
+    model_name = "attention_" + distance_type + ".h5"
+    prediction_name = "pred_attention_" + distance_type + ".npy"
 
     embedding_layer = Embedding(
         len(embedding_matrix),
@@ -102,7 +104,9 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         class_weight=None,
         callbacks=[early_stopping, csv_logger])
 
+    model.save(model_name)
+
     pred = model.predict([question1_test, question2_test], verbose=1)
-    np.save(open('pred.npy', 'wb'), pred)
+    np.save(open(prediction_name, 'wb'), pred)
     logger.info(f"Correct predction count: {sum(y_test == pred)}")
     logger.info(f"Test length: {len(y_test)}")
