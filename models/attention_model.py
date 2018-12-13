@@ -2,6 +2,7 @@ from keras.layers import Input, Embedding, LSTM, Dense, Flatten, Activation, Rep
             Bidirectional, TimeDistributed, Dropout, Conv1D, GlobalMaxPool1D, merge, BatchNormalization
 from keras.layers.merge import multiply, concatenate
 from keras.callbacks import EarlyStopping
+from keras.callbacks import CSVLogger
 from keras import backend as K
 from keras.models import Model
 
@@ -14,6 +15,8 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
     question2_val = X_val[:, 1]
     question1_test = X_test[:, 0]
     question2_test = X_test[:, 1]
+
+    csv_logger = CSVLogger('logs/log.csv', append=True, separator=';')
 
     embedding_layer = Embedding(
         len(embedding_matrix),
@@ -96,7 +99,7 @@ def train(logger, X_train, X_val, X_test, y_train, y_val, y_test, embedding_matr
         batch_size=256,
         shuffle=True,
         class_weight=None,
-        callbacks=[early_stopping, logger])
+        callbacks=[early_stopping, csv_logger])
 
     pred = model.predict([question1_test, question2_test], verbose=1)
     np.save(open('pred.npy', 'wb'), pred)
